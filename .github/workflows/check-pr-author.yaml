@@ -1,0 +1,53 @@
+name: Check PR author
+
+on:
+  pull_request:
+    # Only "opened" events are relevant - the Pull Request author never changes
+    types:
+      - opened
+
+permissions:
+  contents: read
+
+jobs:
+  check-pr-author:
+    timeout-minutes: 1
+    cancel-timeout-minutes: 1
+    name: Check PR author
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out the pull request
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      # GitHub provides the username of the creator of this Pull Request.
+      # According to CoffeeCorp's security policy, the username must end with "_coffeecorp".
+      # This guarantees that the account is created by CoffeeCorp's Identity Management system.
+      - name: Check the pull request author
+        shell: bash
+        env:
+          EXPECTED_SUFFIX: "_coffeecorp"
+          PR_AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
+        run: |
+          EXPECTED_SUFFIX="${EXPECTED_SUFFIX}"
+
+          # Ensure that the PR author field is not empty
+          if [[ -z "$PR_AUTHOR_LOGIN" ]]; then
+            echo "::error title=Missing pull request author::Compared GitHub PR author login '<empty>' against required suffix '$EXPECTED_SUFFIX'; GitHub did not provide a login."
+            exit 1
+          fi
+
+          echo "Checking GitHub PR author login '$PR_AUTHOR_LOGIN' against required suffix '$EXPECTED_SUFFIX'."
+          if [[ "$PR_AUTHOR_LOGIN" != *"$EXPECTED_SUFFIX" ]]; then
+            echo "❌ Check of ${PR_AUTHOR_LOGIN} FAILED."
+            echo "::error title=Invalid pull request author::Compared GitHub PR author login '$PR_AUTHOR_LOGIN' against required suffix '$EXPECTED_SUFFIX'; the login does not match."
+            # Exit with 1 to indicate failure.
+            exit 1
+          else
+            echo "✅ Check of ${PR_AUTHOR_LOGIN} PASSED."
+            echo "::notice title=Valid pull request author::Compared GitHub PR author login '$PR_AUTHOR_LOGIN' against required suffix '$EXPECTED_SUFFIX'; the login matches."
+            # Successful check - exit with 0 to indicate success.
+            exit 0
+          fi
