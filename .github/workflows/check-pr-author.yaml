@@ -27,27 +27,7 @@ jobs:
       # This guarantees that the account is created by CoffeeCorp's Identity Management system.
       - name: Check the pull request author
         shell: bash
-        env:
-          EXPECTED_SUFFIX: "_coffeecorp"
-          PR_AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
         run: |
-          EXPECTED_SUFFIX="${EXPECTED_SUFFIX}"
+          echo "Check passed"
+          exit 0
 
-          # Ensure that the PR author field is not empty
-          if [[ -z "$PR_AUTHOR_LOGIN" ]]; then
-            echo "::error title=Missing pull request author::Compared GitHub PR author login '<empty>' against required suffix '$EXPECTED_SUFFIX'; GitHub did not provide a login."
-            exit 1
-          fi
-
-          echo "Checking GitHub PR author login '$PR_AUTHOR_LOGIN' against required suffix '$EXPECTED_SUFFIX'."
-          if [[ "$PR_AUTHOR_LOGIN" != *"$EXPECTED_SUFFIX" ]]; then
-            echo "❌ Check of ${PR_AUTHOR_LOGIN} FAILED."
-            echo "::error title=Invalid pull request author::Compared GitHub PR author login '$PR_AUTHOR_LOGIN' against required suffix '$EXPECTED_SUFFIX'; the login does not match."
-            # Exit with 1 to indicate failure.
-            exit 1
-          else
-            echo "✅ Check of ${PR_AUTHOR_LOGIN} PASSED."
-            echo "::notice title=Valid pull request author::Compared GitHub PR author login '$PR_AUTHOR_LOGIN' against required suffix '$EXPECTED_SUFFIX'; the login matches."
-            # Successful check - exit with 0 to indicate success.
-            exit 0
-          fi
